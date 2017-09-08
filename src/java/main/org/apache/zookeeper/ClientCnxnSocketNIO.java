@@ -72,6 +72,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             throw new IOException("Socket is null!");
         }
         if (sockKey.isReadable()) {
+            //从SocketChannel中读数据到Buffer
             int rc = sock.read(incomingBuffer);
             if (rc < 0) {
                 throw new EndOfStreamException(
@@ -98,6 +99,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                     updateLastHeard();
                     initialized = true;
                 } else {
+                    //读取响应返回的数据
                     sendThread.readResponse(incomingBuffer);
                     lenBuffer.clear();
                     incomingBuffer = lenBuffer;
@@ -106,6 +108,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             }
         }
         if (sockKey.isWritable()) {
+            //从outgoingQueue队列中取出就绪的Packet
             Packet p = findSendablePacket(outgoingQueue,
                     sendThread.tunnelAuthInProgress());
 
@@ -120,6 +123,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                     }
                     p.createBB();
                 }
+                //将Buffer中的数据，写入SocketChannel
                 sock.write(p.bb);
                 if (!p.bb.hasRemaining()) {
                     sentCount++;
@@ -128,6 +132,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                             && p.requestHeader.getType() != OpCode.ping
                             && p.requestHeader.getType() != OpCode.auth) {
                         synchronized (pendingQueue) {
+                            //将Packet推入pendingQueue，等待返回
                             pendingQueue.add(p);
                         }
                     }
