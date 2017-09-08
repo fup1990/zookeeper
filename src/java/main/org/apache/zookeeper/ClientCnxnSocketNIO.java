@@ -357,9 +357,11 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                 if (sc.finishConnect()) {
                     updateLastSendAndHeard();
                     updateSocketAddresses();
+                    //首次连接
                     sendThread.primeConnection();
                 }
-            } else if ((k.readyOps() & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) != 0) {
+            } else if ((k.readyOps() & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) != 0) {  //读写就绪
+                //进行IO操作
                 doIO(pendingQueue, cnxn);
             }
         }
