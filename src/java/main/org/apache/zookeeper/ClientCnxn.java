@@ -496,6 +496,7 @@ public class ClientCnxn {
                  if (event == eventOfDeath) {
                     wasKilled = true;
                  } else {
+                     //执行监听与回调
                     processEvent(event);
                  }
                  if (wasKilled)
@@ -706,6 +707,7 @@ public class ClientCnxn {
             }
         } else {
             p.finished = true;
+            //将Packet推入waitingEvents队列等待执行监听或回调函数
             eventThread.queuePacket(p);
         }
     }
@@ -903,6 +905,7 @@ public class ClientCnxn {
                     lastZxid = replyHdr.getZxid();
                 }
                 if (packet.response != null && replyHdr.getErr() == 0) {
+                    //反序列化响应
                     packet.response.deserialize(bbia, "response");
                 }
 
@@ -1496,10 +1499,12 @@ public class ClientCnxn {
             WatchDeregistration watchDeregistration)
             throws InterruptedException {
         ReplyHeader r = new ReplyHeader();
+        //将Packet推入outgoingQueue队列，等待发送
         Packet packet = queuePacket(h, r, request, response, null, null, null,
                 null, watchRegistration, watchDeregistration);
         synchronized (packet) {
             while (!packet.finished) {
+                //阻塞，等待结果
                 packet.wait();
             }
         }
@@ -1562,9 +1567,11 @@ public class ClientCnxn {
                 if (h.getType() == OpCode.closeSession) {
                     closing = true;
                 }
+                //推入outgoingQueue队列
                 outgoingQueue.add(packet);
             }
         }
+        //唤醒selector
         sendThread.getClientCnxnSocket().packetAdded();
         return packet;
     }
