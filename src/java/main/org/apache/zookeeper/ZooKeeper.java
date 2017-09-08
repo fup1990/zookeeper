@@ -1441,6 +1441,7 @@ public class ZooKeeper implements AutoCloseable {
         request.setFlags(createMode.toFlag());
         request.setPath(serverPath);
         request.setAcl(acl);
+        //提交请求
         ReplyHeader r = cnxn.submitRequest(h, request, response, null);
         if (r.getErr() != 0) {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()),
