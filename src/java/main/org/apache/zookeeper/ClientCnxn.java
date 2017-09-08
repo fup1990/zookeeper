@@ -948,6 +948,7 @@ public class ClientCnxn {
                     clientCnxnSocket.getRemoteSocketAddress());
             isFirstConnect = false;
             long sessId = (seenRwServerBefore) ? sessionId : 0;
+            //创建连接请求
             ConnectRequest conReq = new ConnectRequest(0, lastZxid,
                     sessionTimeout, sessId, sessionPasswd);
             // We add backwards since we are pushing into the front
@@ -997,6 +998,7 @@ public class ClientCnxn {
                                                        childWatchesBatch);
                         RequestHeader header = new RequestHeader(-8, OpCode.setWatches);
                         Packet packet = new Packet(header, new ReplyHeader(), sw, null, null);
+                        //将封装的请求实体，放入outgoingQueue
                         outgoingQueue.addFirst(packet);
                     }
                 }
@@ -1130,10 +1132,11 @@ public class ClientCnxn {
                         if (closing) {
                             break;
                         }
+                        //与server建立连接
                         startConnect();
                         clientCnxnSocket.updateLastSendAndHeard();
                     }
-
+                    //判断是否超时
                     if (state.isConnected()) {
                         // determine whether we need to send an AuthFailed event.
                         if (zooKeeperSaslClient != null) {
@@ -1170,7 +1173,7 @@ public class ClientCnxn {
                     } else {
                         to = connectTimeout - clientCnxnSocket.getIdleRecv();
                     }
-                    
+                    //session超时
                     if (to <= 0) {
                         String warnInfo;
                         warnInfo = "Client session timed out, have not heard from server in "
@@ -1188,6 +1191,7 @@ public class ClientCnxn {
                         		((clientCnxnSocket.getIdleSend() > 1000) ? 1000 : 0);
                         //send a ping request either time is due or no packet sent out within MAX_SEND_PING_INTERVAL
                         if (timeToNextPing <= 0 || clientCnxnSocket.getIdleSend() > MAX_SEND_PING_INTERVAL) {
+                            //发送心跳包
                             sendPing();
                             clientCnxnSocket.updateLastSend();
                         } else {
@@ -1210,7 +1214,7 @@ public class ClientCnxn {
                         }
                         to = Math.min(to, pingRwTimeout - idlePingRwServer);
                     }
-
+                    //发送指令到server
                     clientCnxnSocket.doTransport(to, pendingQueue, ClientCnxn.this);
                 } catch (Throwable e) {
                     if (closing) {
