@@ -791,6 +791,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             touch(si.cnxn);
             boolean validpacket = Request.isValid(si.type);
             if (validpacket) {
+                //一号任务链(PrepRequestProcessor)处理Request
                 firstProcessor.processRequest(si);
                 if (si.cnxn != null) {
                     incInProcess();
@@ -1052,6 +1053,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         InputStream bais = new ByteBufferInputStream(incomingBuffer);
         BinaryInputArchive bia = BinaryInputArchive.getArchive(bais);
         RequestHeader h = new RequestHeader();
+        //反序列化
         h.deserialize(bia, "header");
         // Through the magic of byte buffers, txn will not be
         // pointing
@@ -1105,12 +1107,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 return;
             }
             else {
+                //将连接信息封装成Request
                 Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(),
                   h.getType(), incomingBuffer, cnxn.getAuthInfo());
                 si.setOwner(ServerCnxn.me);
                 // Always treat packet from the client as a possible
                 // local request.
                 setLocalSessionFlag(si);
+                //提交处理Request
                 submitRequest(si);
             }
         }
