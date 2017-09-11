@@ -178,6 +178,7 @@ public class NIOServerCnxn extends ServerCnxn {
             if (!initialized) {
                 readConnectRequest();
             } else {
+                //解析请求
                 readRequest();
             }
             lenBuffer.clear();
@@ -317,7 +318,7 @@ public class NIOServerCnxn extends ServerCnxn {
 
                 return;
             }
-            if (k.isReadable()) {
+            if (k.isReadable()) {   //可读
                 int rc = sock.read(incomingBuffer);
                 if (rc < 0) {
                     throw new EndOfStreamException(
@@ -345,7 +346,7 @@ public class NIOServerCnxn extends ServerCnxn {
                     }
                 }
             }
-            if (k.isWritable()) {
+            if (k.isWritable()) {   //可写
                 handleWrite(k);
 
                 if (!initialized && !getReadInterest() && !getWriteInterest()) {
