@@ -183,6 +183,11 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         }
     }
 
+    /**
+     * 将ChangeRecord添加到outstandingChanges队列。
+     * 此时节点数据并没有同步到DataTree中。
+     * @param c
+     */
     private void addChangeRecord(ChangeRecord c) {
         synchronized (zks.outstandingChanges) {
             zks.outstandingChanges.add(c);
@@ -351,7 +356,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
     /**
      * This method will be called inside the ProcessRequestThread, which is a
      * singleton, so there will be a single thread calling this code.
-     *
+     * 根据Request的不同种类，将Request转变为不同的Record对象，再调用addChangeRecord()
      * @param type
      * @param zxid
      * @param request
@@ -906,6 +911,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             }
         }
         request.zxid = zks.getZxid();
+        //二号任务链(SyncRequestProcessor)执行request
         nextProcessor.processRequest(request);
     }
 
