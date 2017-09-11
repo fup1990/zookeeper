@@ -119,6 +119,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                 }
                 if (si != null) {
                     // track the number of records written to the log
+                    //在操作日志文件中，添加记录
                     if (zks.getZKDatabase().append(si)) {
                         logCount++;
                         if (logCount > (snapCount / 2 + randRoll)) {
@@ -129,9 +130,11 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                             if (snapInProcess != null && snapInProcess.isAlive()) {
                                 LOG.warn("Too busy to snap, skipping");
                             } else {
+                                //新建一个线程,执行将DataTree中的数据持久化到硬盘，生成快照文件
                                 snapInProcess = new ZooKeeperThread("Snapshot Thread") {
                                         public void run() {
                                             try {
+                                                //创建快照文件
                                                 zks.takeSnapshot();
                                             } catch(Exception e) {
                                                 LOG.warn("Unexpected exception", e);
@@ -150,6 +153,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                         if (nextProcessor != null) {
                             nextProcessor.processRequest(si);
                             if (nextProcessor instanceof Flushable) {
+
                                 ((Flushable)nextProcessor).flush();
                             }
                         }
@@ -157,6 +161,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                     }
                     toFlush.add(si);
                     if (toFlush.size() > 1000) {
+                        //刷新缓存中DataTree数据
                         flush(toFlush);
                     }
                 }
@@ -179,6 +184,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         while (!toFlush.isEmpty()) {
             Request i = toFlush.remove();
             if (nextProcessor != null) {
+                //执行三号任务链(FinalRequestProcessor)
                 nextProcessor.processRequest(i);
             }
         }
