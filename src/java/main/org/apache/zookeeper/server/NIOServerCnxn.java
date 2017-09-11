@@ -223,6 +223,7 @@ public class NIOServerCnxn extends ServerCnxn {
          * with data from the non-direct buffers that we need to
          * send.
          */
+        //创建ByteBuffer,使用系统内存
         ByteBuffer directBuffer = NIOServerCnxnFactory.getDirectBuffer();
         if (directBuffer == null) {
             ByteBuffer[] bufferList = new ByteBuffer[outgoingBuffers.size()];
@@ -706,6 +707,7 @@ public class NIOServerCnxn extends ServerCnxn {
             byte b[] = baos.toByteArray();
             ByteBuffer bb = ByteBuffer.wrap(b);
             bb.putInt(b.length - 4).rewind();
+            //将序列化后的响应信息，放入outgoingBuffers队列，等待写入socket
             sendBuffer(bb);
             if (h.getXid() > 0) {
                 // check throttling
