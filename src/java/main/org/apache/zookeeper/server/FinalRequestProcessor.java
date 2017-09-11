@@ -101,6 +101,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         ProcessTxnResult rc = null;
         synchronized (zks.outstandingChanges) {
             // Need to process local session requests
+            //根据不同类型的request，来更新DataTree中的数据
             rc = zks.processTxn(request);
 
             // request.hdr is set for write requests, which are the only ones
@@ -456,6 +457,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                     request.createTime, Time.currentElapsedTime());
 
         try {
+            //发送响应信息
             cnxn.sendResponse(hdr, rsp, "response");
             if (request.type == OpCode.closeSession) {
                 cnxn.sendCloseSession();
