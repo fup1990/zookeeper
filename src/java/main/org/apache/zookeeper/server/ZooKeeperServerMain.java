@@ -102,7 +102,7 @@ public class ZooKeeperServerMain {
         } else {
             config.parse(args);
         }
-
+        //启动
         runFromConfig(config);
     }
 
@@ -122,24 +122,33 @@ public class ZooKeeperServerMain {
             // run() in this thread.
             // create a file logger url from the command line args
             txnLog = new FileTxnSnapLog(config.dataLogDir, config.dataDir);
+            //初始化ZooKeeperServer
             final ZooKeeperServer zkServer = new ZooKeeperServer(txnLog,
                     config.tickTime, config.minSessionTimeout, config.maxSessionTimeout, null);
 
             // Registers shutdown handler which will be used to know the
             // server error or shutdown state changes.
+            //设置门闩类，用于关闭服务
             final CountDownLatch shutdownLatch = new CountDownLatch(1);
             zkServer.registerServerShutdownHandler(
+                    //设置服务关闭Handler，shutdownLatch.countDown()
                     new ZooKeeperServerShutdownHandler(shutdownLatch));
 
             // Start Admin server
+            //默认启动JettyAdminServer
+            //内置了jetty服务器，用于处理get命令
             adminServer = AdminServerFactory.createAdminServer();
             adminServer.setZooKeeperServer(zkServer);
             adminServer.start();
 
             boolean needStartZKServer = true;
             if (config.getClientPortAddress() != null) {
+                //默认NIOServerCnxnFactory
+                //用于维护与客户端的连接
                 cnxnFactory = ServerCnxnFactory.createFactory();
+                //初始化配置信息
                 cnxnFactory.configure(config.getClientPortAddress(), config.getMaxClientCnxns(), false);
+                //启动NIOServerCnxnFactory
                 cnxnFactory.startup(zkServer);
                 // zkServer has been started. So we don't need to start it again in secureCnxnFactory.
                 needStartZKServer = false;
@@ -158,8 +167,9 @@ public class ZooKeeperServerMain {
 
             // Watch status of ZooKeeper server. It will do a graceful shutdown
             // if the server is not running or hits an internal error.
+            //门闩类线程阻塞
             shutdownLatch.await();
-
+            //关闭
             shutdown();
 
             if (cnxnFactory != null) {

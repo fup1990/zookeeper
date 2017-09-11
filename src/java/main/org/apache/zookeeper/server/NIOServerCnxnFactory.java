@@ -423,8 +423,10 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
 
         private void select() {
             try {
+                //选择器选择就绪的socket
+                //阻塞
                 selector.select();
-
+                //获得就绪的SelectionKey
                 Set<SelectionKey> selected = selector.selectedKeys();
                 ArrayList<SelectionKey> selectedList =
                     new ArrayList<SelectionKey>(selected);
@@ -433,12 +435,13 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 while(!stopped && selectedKeys.hasNext()) {
                     SelectionKey key = selectedKeys.next();
                     selected.remove(key);
-
-                    if (!key.isValid()) {
+                    if (!key.isValid()) {   //判断SelectionKey是否有效
+                        //若无效，则关闭
                         cleanupSelectionKey(key);
                         continue;
                     }
-                    if (key.isReadable() || key.isWritable()) {
+                    if (key.isReadable() || key.isWritable()) {     //判断此SelectionKey是否可读或可写
+                        //处理IO操作
                         handleIO(key);
                     } else {
                         LOG.warn("Unexpected ops in select " + key.readyOps());
@@ -610,7 +613,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     // ipMap is used to limit connections per IP
     private final ConcurrentHashMap<InetAddress, Set<NIOServerCnxn>> ipMap =
         new ConcurrentHashMap<InetAddress, Set<NIOServerCnxn>>( );
-
+    //最大客户端连接数量
     protected int maxClientCnxns = 60;
 
     int sessionlessCnxnTimeout;
@@ -635,6 +638,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     private volatile boolean stopped = true;
     private ConnectionExpirerThread expirerThread;
     private AcceptThread acceptThread;
+    //selectorThread线程的集合
     private final Set<SelectorThread> selectorThreads =
         new HashSet<SelectorThread>();
 
@@ -652,19 +656,22 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         // cnxnExpiryQueue. These don't need to be the same, but the expiring
         // interval passed into the ExpiryQueue() constructor below should be
         // less than or equal to the timeout.
+        //过期连接队列
         cnxnExpiryQueue =
             new ExpiryQueue<NIOServerCnxn>(sessionlessCnxnTimeout);
+        //过期连接线程
         expirerThread = new ConnectionExpirerThread();
-
+        //CPU核数
         int numCores = Runtime.getRuntime().availableProcessors();
         // 32 cores sweet spot seems to be 4 selector threads
+        //初始化SelectorThread数量
         numSelectorThreads = Integer.getInteger(
             ZOOKEEPER_NIO_NUM_SELECTOR_THREADS,
             Math.max((int) Math.sqrt((float) numCores/2), 1));
         if (numSelectorThreads < 1) {
             throw new IOException("numSelectorThreads must be at least 1");
         }
-
+        //初始化WorkerThread数量
         numWorkerThreads = Integer.getInteger(
             ZOOKEEPER_NIO_NUM_WORKER_THREADS, 2 * numCores);
         workerShutdownTimeoutMS = Long.getLong(
@@ -678,14 +685,18 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                  + (directBufferBytes == 0 ? "gathered writes." :
                     ("" + (directBufferBytes/1024) + " kB direct buffers.")));
         for(int i=0; i<numSelectorThreads; ++i) {
+            //初始化selectorThread线程，并添加至集合
             selectorThreads.add(new SelectorThread(i));
         }
-
+        //初始化ServerSocketChannel
         this.ss = ServerSocketChannel.open();
+        //
         ss.socket().setReuseAddress(true);
         LOG.info("binding to port " + addr);
         ss.socket().bind(addr);
+        //设置为非阻塞式
         ss.configureBlocking(false);
+        //初始化AcceptThread
         acceptThread = new AcceptThread(ss, addr, selectorThreads);
     }
 
@@ -738,16 +749,19 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     public void start() {
         stopped = false;
         if (workerPool == null) {
+            //初始化work线程池
             workerPool = new WorkerService(
                 "NIOWorker", numWorkerThreads, false);
         }
         for(SelectorThread thread : selectorThreads) {
+            //启动SelectorThread线程
             if (thread.getState() == Thread.State.NEW) {
                 thread.start();
             }
         }
         // ensure thread is started once and only once
         if (acceptThread.getState() == Thread.State.NEW) {
+            //启动AcceptThread
             acceptThread.start();
         }
         if (expirerThread.getState() == Thread.State.NEW) {
