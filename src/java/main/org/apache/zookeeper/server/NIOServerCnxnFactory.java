@@ -466,6 +466,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             cnxn.disableSelectable();
             key.interestOps(0);
             touchCnxn(cnxn);
+            //work线程池执行IOWorkRequest
             workerPool.schedule(workRequest);
         }
 
@@ -530,6 +531,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             }
 
             if (key.isReadable() || key.isWritable()) {
+                //执行IO操作
                 cnxn.doIO(key);
 
                 // Check if we shutdown or doIO() closed this connection
