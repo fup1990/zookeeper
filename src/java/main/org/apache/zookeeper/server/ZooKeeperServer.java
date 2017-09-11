@@ -1183,6 +1183,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         int opCode = request != null ? request.type : hdr.getType();
         long sessionId = request != null ? request.sessionId : hdr.getClientId();
         if (hdr != null) {
+            //根据不同类型的request，来更新DataTree中的数据
             rc = getZKDatabase().processTxn(hdr, txn);
         } else {
             rc = new ProcessTxnResult();
