@@ -206,7 +206,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
      *         rolled back in any failure.
      */
     private Map<String, ChangeRecord> getPendingChanges(MultiTransactionRecord multiRequest) {
-        HashMap<String, ChangeRecord> pendingChangeRecords = new HashMap<String, ChangeRecord>();
+        Map<String, ChangeRecord> pendingChangeRecords = new HashMap<String, ChangeRecord>();
 
         for (Op op : multiRequest) {
             String path = op.getPath();
@@ -917,7 +917,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
 
     private List<ACL> removeDuplicates(List<ACL> acl) {
 
-        LinkedList<ACL> retval = new LinkedList<ACL>();
+        List<ACL> retval = new LinkedList<ACL>();
         if (acl != null) {
             for (ACL a : acl) {
                 if (!retval.contains(a)) {
@@ -964,7 +964,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         // check for well formed ACLs
         // This resolves https://issues.apache.org/jira/browse/ZOOKEEPER-1877
         List<ACL> uniqacls = removeDuplicates(acls);
-        LinkedList<ACL> rv = new LinkedList<ACL>();
+        List<ACL> rv = new LinkedList<ACL>();
         if (uniqacls == null || uniqacls.size() == 0) {
             throw new KeeperException.InvalidACLException(path);
         }
