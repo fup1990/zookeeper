@@ -239,7 +239,7 @@ public class ZKDatabase {
                 addCommittedProposal(r);
             }
         };
-
+        //加载快照文件与操作日志文件
         long zxid = snapLog.restore(dataTree,sessionsWithTimeouts,listener);
         initialized = true;
         return zxid;
