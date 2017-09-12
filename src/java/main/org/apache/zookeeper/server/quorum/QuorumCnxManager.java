@@ -313,6 +313,7 @@ public class QuorumCnxManager {
      *
      */
     public void receiveConnection(Socket sock) {
+        //sid:服务id
         Long sid = null, protocolVersion = null;
         InetSocketAddress electionAddr = null;
 
@@ -350,6 +351,7 @@ public class QuorumCnxManager {
         }
         
         //If wins the challenge, then close the new connection.
+        //如果对方id比我小，则关闭连接，只允许大id的server连接小id的server
         if (sid < self.getId()) {
             /*
              * This replica might still believe that the connection to sid is
@@ -374,6 +376,7 @@ public class QuorumCnxManager {
             }
 
         } else { // Otherwise start worker threads to receive data.
+            //初始化IO线程,并启动
             SendWorker sw = new SendWorker(sock, sid);
             RecvWorker rw = new RecvWorker(sock, sid, sw);
             sw.setRecv(rw);
@@ -402,7 +405,7 @@ public class QuorumCnxManager {
         /*
          * If sending message to myself, then simply enqueue it (loopback).
          */
-        if (self.getId() == sid) {
+        if (self.getId() == sid) {      //如果投票投自己，则直接添加到本地接收队列
              b.position(0);
              addToRecvQueue(new Message(b.duplicate(), sid));
             /*
@@ -645,6 +648,7 @@ public class QuorumCnxManager {
                             setSockOpts(client);
                             LOG.info("Received connection request "
                                      + client.getRemoteSocketAddress());
+                            //接收连接
                             receiveConnection(client);
                             numRetries = 0;
                         } catch (SocketTimeoutException e) {

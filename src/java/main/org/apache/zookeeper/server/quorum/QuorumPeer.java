@@ -768,7 +768,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         if (!getView().containsKey(myid)) {
             throw new RuntimeException("My id " + myid + " not in the peer list");
          }
+        //加载快照文件和操作日志文件到DataTree
         loadDataBase();
+        //启动服务
         startServerCnxnFactory();
         try {
             adminServer.start();
@@ -776,6 +778,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             LOG.warn("Problem starting AdminServer", e);
             System.out.println(e);
         }
+        //选举
         startLeaderElection();
         super.start();
     }
@@ -839,7 +842,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             re.setStackTrace(e.getStackTrace());
             throw re;
         }
-
+        //选举算法
         this.electionAlg = createElectionAlgorithm(electionType);
     }
 
@@ -940,6 +943,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         //TODO: use a factory rather than a switch
         switch (electionAlgorithm) {
             case 1:
+                //AuthFastLeaderElection已废弃
                 le = new AuthFastLeaderElection(this);
                 break;
             case 2:
@@ -947,9 +951,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 break;
             case 3:
                 qcm = new QuorumCnxManager(this);
+                //QuorumCnxManager.Listener 线程，负责监听选举端口(electionAddr:3888)
+                // 在选举过程中维护各个节点的点对点通信。
                 QuorumCnxManager.Listener listener = qcm.listener;
                 if(listener != null){
                     listener.start();
+                    //默认使用FastLeaderElection算法
                     FastLeaderElection fle = new FastLeaderElection(this, qcm);
                     fle.start();
                     le = fle;
@@ -1031,11 +1038,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
              * Main loop
              */
             while (running) {
+                //查看节点的服务状态
                 switch (getPeerState()) {
-                case LOOKING:
+                case LOOKING:       //选举状态
                     LOG.info("LOOKING");
 
-                    if (Boolean.getBoolean("readonlymode.enabled")) {
+                    if (Boolean.getBoolean("readonlymode.enabled")) {   //只读模式
                         LOG.info("Attempting to start ReadOnlyZooKeeperServer");
 
                         // Create read-only server but don't start it immediately
@@ -1087,6 +1095,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                                shuttingDownLE = false;
                                startLeaderElection();
                                }
+                            //选举算法开始选举
                             setCurrentVote(makeLEStrategy().lookForLeader());
                         } catch (Exception e) {
                             LOG.warn("Unexpected exception", e);
@@ -1094,7 +1103,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         }                        
                     }
                     break;
-                case OBSERVING:
+                case OBSERVING:     //observer节点，只具备选举权，监听leader的变化
                     try {
                         LOG.info("OBSERVING");
                         setObserver(makeObserver(logFactory));
@@ -1107,7 +1116,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                        updateServerState();
                     }
                     break;
-                case FOLLOWING:
+                case FOLLOWING:     //从节点
                     try {
                        LOG.info("FOLLOWING");
                         setFollower(makeFollower(logFactory));
@@ -1120,7 +1129,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                        updateServerState();
                     }
                     break;
-                case LEADING:
+                case LEADING:       //集群的主节点
                     LOG.info("LEADING");
                     try {
                         setLeader(makeLeader(logFactory));
