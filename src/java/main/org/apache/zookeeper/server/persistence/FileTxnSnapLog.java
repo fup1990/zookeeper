@@ -174,6 +174,7 @@ public class FileTxnSnapLog {
      */
     public long restore(DataTree dt, Map<Long, Integer> sessions,
             PlayBackListener listener) throws IOException {
+        //反序列化最新的快照文件，将其加载到DataTree
         long deserializeResult = snapLog.deserialize(dt, sessions);
         FileTxnLog txnLog = new FileTxnLog(dataDir);
         boolean trustEmptyDB;
@@ -184,7 +185,7 @@ public class FileTxnSnapLog {
         } else {
             trustEmptyDB = autoCreateDB;
         }
-        if (-1L == deserializeResult) {
+        if (-1L == deserializeResult) { //没有可加载的快照文件
             /* this means that we couldn't find any snapshot, so we need to
              * initialize an empty database (reported in ZOOKEEPER-2325) */
             if (txnLog.getLastLoggedZxid() != -1) {
@@ -196,6 +197,7 @@ public class FileTxnSnapLog {
             if (trustEmptyDB) {
                 /* TODO: (br33d) we should either put a ConcurrentHashMap on restore()
                  *       or use Map on save() */
+                //将DataTree序列化到磁盘
                 save(dt, (ConcurrentHashMap<Long, Integer>)sessions, false);
 
                 /* return a zxid of 0, since we know the database is empty */
@@ -207,6 +209,7 @@ public class FileTxnSnapLog {
                 return -1L;
             }
         }
+
         TxnIterator itr = txnLog.read(dt.lastProcessedZxid+1);
         long highestZxid = dt.lastProcessedZxid;
         TxnHeader hdr;
@@ -293,6 +296,7 @@ public class FileTxnSnapLog {
                                 + ((CreateSessionTxn) txn).getTimeOut());
             }
             // give dataTree a chance to sync its lastProcessedZxid
+            //
             rc = dt.processTxn(hdr, txn);
             break;
         case OpCode.closeSession:
