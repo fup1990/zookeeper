@@ -956,6 +956,7 @@ public class FastLeaderElection implements Election {
                             //3、快照文件更新id更大的，即磁盘数据更完整的
                             if(totalOrderPredicate(n.leader, n.zxid, n.peerEpoch,
                                     getInitId(), getInitLastLoggedZxid(), getPeerEpoch())) {    //对方胜出，投对方
+                                //更新候选人信息
                                 updateProposal(n.leader, n.zxid, n.peerEpoch);
                             } else {    //自己胜出，继续投自己
                                 updateProposal(getInitId(),
