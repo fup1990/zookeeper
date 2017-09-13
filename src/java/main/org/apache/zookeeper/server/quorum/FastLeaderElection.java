@@ -950,6 +950,10 @@ public class FastLeaderElection implements Election {
                             logicalclock.set(n.electionEpoch);
                             recvset.clear();
                             //判断选举是否胜出
+                            //选举优胜规则:
+                            //1、配置的myid更大的
+                            //2、DataTree更新id更大的，即内存数据更完整的
+                            //3、快照文件更新id更大的，即磁盘数据更完整的
                             if(totalOrderPredicate(n.leader, n.zxid, n.peerEpoch,
                                     getInitId(), getInitLastLoggedZxid(), getPeerEpoch())) {    //对方胜出，投对方
                                 updateProposal(n.leader, n.zxid, n.peerEpoch);
