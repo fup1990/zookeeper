@@ -383,13 +383,14 @@ public class ClientCnxn {
             long sessionId, byte[] sessionPasswd, boolean canBeReadOnly) {
         this.zooKeeper = zooKeeper;
         this.watcher = watcher;
-        this.sessionId = sessionId;
+        this.sessionId = sessionId;     //0
         this.sessionPasswd = sessionPasswd;
         this.sessionTimeout = sessionTimeout;
         this.hostProvider = hostProvider;
         this.chrootPath = chrootPath;
-
+        //连接超时时间：会话超时时间/集群数量
         connectTimeout = sessionTimeout / hostProvider.size();
+        //读取超时时间:会话超时时间的2/3
         readTimeout = sessionTimeout * 2 / 3;
         readOnly = canBeReadOnly;
 
