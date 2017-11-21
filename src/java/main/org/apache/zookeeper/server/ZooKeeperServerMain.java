@@ -153,12 +153,13 @@ public class ZooKeeperServerMain {
                 // zkServer has been started. So we don't need to start it again in secureCnxnFactory.
                 needStartZKServer = false;
             }
+            //
             if (config.getSecureClientPortAddress() != null) {
                 secureCnxnFactory = ServerCnxnFactory.createFactory();
                 secureCnxnFactory.configure(config.getSecureClientPortAddress(), config.getMaxClientCnxns(), true);
                 secureCnxnFactory.startup(zkServer, needStartZKServer);
             }
-
+            //管理zknodes，定时器执行
             containerManager = new ContainerManager(zkServer.getZKDatabase(), zkServer.firstProcessor,
                     Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
                     Integer.getInteger("znode.container.maxPerMinute", 10000)

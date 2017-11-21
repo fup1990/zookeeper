@@ -302,6 +302,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                     selectorIterator = selectorThreads.iterator();
                 }
                 SelectorThread selectorThread = selectorIterator.next();
+                //将SocketChannel放入acceptedQueue队列
                 if (!selectorThread.addAcceptedConnection(sc)) {
                     throw new IOException(
                         "Unable to add connection to selector queue"
